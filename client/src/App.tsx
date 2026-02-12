@@ -4,6 +4,7 @@ import './App.css'
 import { UpdateChecker } from './UpdateChecker'
 import * as storage from './storage'
 import type { Category, SkillWithStats, Dashboard, Alert, HistoryData, Settings } from './storage'
+import { Brain, Home, BookOpen, TrendingUp, Settings as SettingsIcon, Plus } from 'lucide-react'
 
 // Confetti component
 const Confetti = ({ active }: { active: boolean }) => {
@@ -128,7 +129,7 @@ function App() {
   const [sortBy, setSortBy] = useState<SortOption>('health')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [settings, setSettings] = useState<Settings>(storage.DEFAULT_SETTINGS)
-  const [currentTheme, setCurrentTheme] = useState<'dark' | 'light'>('dark')
+  const [, setCurrentTheme] = useState<'dark' | 'light'>('dark')
   const [toast, setToast] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -578,21 +579,13 @@ function App() {
 
       <header className="header">
         <div className="header-left">
-          <h1>🧠</h1>
+          <Brain size={28} className="header-logo" />
         </div>
         <div className="header-center">
           <span className="header-title">Skill Decay</span>
         </div>
         <div className="header-right">
-          <button 
-            className="icon-btn" 
-            onClick={() => {
-              const nextTheme = settings.theme === 'dark' ? 'light' : settings.theme === 'light' ? 'auto' : 'dark'
-              saveSettings({ ...settings, theme: nextTheme })
-            }}
-          >
-            {settings.theme === 'auto' ? '🌓' : currentTheme === 'dark' ? '☀️' : '🌙'}
-          </button>
+          {/* Theme toggle moved to Settings */}
         </div>
       </header>
 
@@ -1008,34 +1001,34 @@ function App() {
           className={view === 'dashboard' ? 'active' : ''} 
           onClick={() => setView('dashboard')}
         >
-          <span className="nav-icon">📊</span>
+          <Home size={22} />
           <span className="nav-label">Home</span>
         </button>
         <button 
           className={view === 'skills' ? 'active' : ''} 
           onClick={() => setView('skills')}
         >
-          <span className="nav-icon">📚</span>
+          <BookOpen size={22} />
           <span className="nav-label">Skills</span>
         </button>
         <button 
           className="fab"
           onClick={() => setShowAddModal(true)}
         >
-          <span>+</span>
+          <Plus size={24} />
         </button>
         <button 
           className={view === 'progress' ? 'active' : ''} 
           onClick={() => setView('progress')}
         >
-          <span className="nav-icon">📈</span>
+          <TrendingUp size={22} />
           <span className="nav-label">Progress</span>
         </button>
         <button 
           className={view === 'settings' ? 'active' : ''} 
           onClick={() => setView('settings')}
         >
-          <span className="nav-icon">⚙️</span>
+          <SettingsIcon size={22} />
           <span className="nav-label">Settings</span>
         </button>
       </nav>
