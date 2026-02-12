@@ -169,23 +169,27 @@ function App() {
 
   // Load all data from localStorage
   const loadData = () => {
-    const loadedSettings = storage.getSettings()
-    setSettings(loadedSettings)
-    setSkills(storage.getSkillsWithStats())
-    setDashboard(storage.getDashboard())
-    setAlerts(storage.getAlerts())
-    setHistory(storage.getHistory(30))
-    
-    if (loadedSettings.showOnboarding) {
-      setShowOnboarding(true)
+    try {
+      const loadedSettings = storage.getSettings()
+      setSettings(loadedSettings)
+      setSkills(storage.getSkillsWithStats())
+      setDashboard(storage.getDashboard())
+      setAlerts(storage.getAlerts())
+      setHistory(storage.getHistory(30))
+      
+      if (loadedSettings.showOnboarding) {
+        setShowOnboarding(true)
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  // Initial load
+  // Initial load - no delay needed for localStorage
   useEffect(() => {
-    // Small delay for splash feel
-    setTimeout(loadData, 300)
+    loadData()
   }, [])
 
   // Refresh all data
