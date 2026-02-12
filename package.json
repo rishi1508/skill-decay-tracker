@@ -1,0 +1,56 @@
+{
+  "name": "skill-decay-tracker",
+  "version": "1.2.0",
+  "description": "Track your skills and prevent them from decaying",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "./start.sh",
+    "dev": "concurrently \"cd server && node index.js\" \"cd client && npm run dev\"",
+    "build": "cd client && npm run build",
+    "electron": "electron .",
+    "electron:dev": "NODE_ENV=development electron .",
+    "package": "npm run build && electron-builder"
+  },
+  "keywords": [
+    "skill-tracking",
+    "learning",
+    "productivity",
+    "spaced-repetition"
+  ],
+  "author": "Rishi Mishra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rishi1508/skill-decay-tracker"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.skilltracker.app",
+    "productName": "Skill Decay Tracker",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "client/dist/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md}",
+      "!**/node_modules/.bin"
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": ["nsis"]
+    }
+  }
+}

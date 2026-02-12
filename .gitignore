@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+*.apk
+
+# Keystore (sensitive)
+*.keystore
+keystore.base64.txt
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Android
+client/android/.gradle/
+client/android/app/build/
+client/android/build/
+client/android/local.properties
+client/android/app/src/main/assets/public/
+
+# Server database (optional - user data)
+server/*.db
+
+# Memory files (personal data)
+memory/

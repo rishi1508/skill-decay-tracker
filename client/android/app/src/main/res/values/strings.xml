@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Skill Decay Tracker</string>
+    <string name="title_activity_main">Skill Decay Tracker</string>
+    <string name="package_name">com.skilltracker.app</string>
+    <string name="custom_url_scheme">com.skilltracker.app</string>
+</resources>
