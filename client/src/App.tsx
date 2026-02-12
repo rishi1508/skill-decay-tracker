@@ -4,7 +4,12 @@ import './App.css'
 import { UpdateChecker } from './UpdateChecker'
 import * as storage from './storage'
 import type { Category, SkillWithStats, Dashboard, Alert, HistoryData, Settings } from './storage'
-import { Brain, Home, BookOpen, TrendingUp, Settings as SettingsIcon, Plus } from 'lucide-react'
+import { 
+  Brain, Home, BookOpen, TrendingUp, Settings as SettingsIcon, Plus,
+  Flame, Zap, Target, Search, X, Edit2, Trash2, FileText,
+  ChevronRight, Clock, BarChart3, Award,
+  CheckCircle2, AlertCircle, AlertTriangle, XCircle, HelpCircle
+} from 'lucide-react'
 
 // Confetti component
 const Confetti = ({ active }: { active: boolean }) => {
@@ -311,7 +316,7 @@ function App() {
     })
     setShowAddModal(false)
     refreshAll()
-    showToast('Skill added! 🎯')
+    showToast('Skill added')
   }
 
   // Update skill
@@ -327,7 +332,7 @@ function App() {
     setShowEditModal(false)
     setEditingSkill(null)
     refreshAll()
-    showToast('Skill updated! ✏️')
+    showToast('Skill updated')
   }
 
   const openEditModal = (skill: SkillWithStats) => {
@@ -342,9 +347,9 @@ function App() {
     
     const newDashboard = storage.getDashboard()
     if (newDashboard.current_streak > 0 && newDashboard.current_streak % 7 === 0) {
-      showToast(`🔥 ${newDashboard.current_streak} day streak! Amazing!`, true)
+      showToast(`${newDashboard.current_streak} day streak! Amazing!`, true)
     } else {
-      showToast('Practice logged! ⚡')
+      showToast('Practice logged')
     }
   }
 
@@ -361,7 +366,7 @@ function App() {
     setShowPracticeModal(false)
     setSelectedSkill(null)
     refreshAll()
-    showToast('Practice session logged! 📝', true)
+    showToast('Practice session logged', true)
   }
 
   // Delete skill
@@ -382,7 +387,7 @@ function App() {
     a.download = `skill-tracker-backup-${new Date().toISOString().split('T')[0]}.json`
     a.click()
     URL.revokeObjectURL(url)
-    showToast('Backup downloaded! 💾')
+    showToast('Backup downloaded')
   }
 
   // Import data
@@ -395,18 +400,18 @@ function App() {
       setShowImportModal(false)
       refreshAll()
     } catch {
-      showToast('Import failed: Invalid file ❌')
+      showToast('Import failed: Invalid file')
     }
   }
 
-  const getHealthEmoji = (health: string) => {
+  const getHealthIcon = (health: string) => {
     switch (health) {
-      case 'excellent': return '🟢'
-      case 'good': return '🟡'
-      case 'fair': return '🟠'
-      case 'rusty': return '🔴'
-      case 'critical': return '💀'
-      default: return '⚪'
+      case 'excellent': return <CheckCircle2 size={16} className="health-icon excellent" />
+      case 'good': return <CheckCircle2 size={16} className="health-icon good" />
+      case 'fair': return <AlertCircle size={16} className="health-icon fair" />
+      case 'rusty': return <AlertTriangle size={16} className="health-icon rusty" />
+      case 'critical': return <XCircle size={16} className="health-icon critical" />
+      default: return <HelpCircle size={16} className="health-icon unknown" />
     }
   }
 
@@ -625,15 +630,15 @@ function App() {
                   <div className="hero-right">
                     <div className="hero-stat">
                       <span className="hero-number">{dashboard.current_streak}</span>
-                      <span className="hero-text">🔥 Day Streak</span>
+                      <span className="hero-text"><Flame size={14} className="inline-icon" /> Day Streak</span>
                     </div>
                     <div className="hero-stat">
                       <span className="hero-number">{dashboard.total_skills}</span>
-                      <span className="hero-text">📚 Skills</span>
+                      <span className="hero-text"><BookOpen size={14} className="inline-icon" /> Skills</span>
                     </div>
                     <div className="hero-stat">
                       <span className={`hero-badge ${dashboard.practiced_today ? 'success' : 'warning'}`}>
-                        {dashboard.practiced_today ? '✓ Done' : '⏳ Pending'}
+                        {dashboard.practiced_today ? <><CheckCircle2 size={12} /> Done</> : <><Clock size={12} /> Pending</>}
                       </span>
                       <span className="hero-text">Today</span>
                     </div>
@@ -642,7 +647,7 @@ function App() {
 
                 {alerts.length > 0 && (
                   <section className="quick-actions">
-                    <h3>⚡ Quick Practice</h3>
+                    <h3><Zap size={18} className="section-icon" /> Quick Practice</h3>
                     <div className="quick-actions-scroll">
                       {alerts.slice(0, 5).map((alert) => (
                         <button 
@@ -663,17 +668,20 @@ function App() {
                   <h3>Health Overview</h3>
                   <div className="health-grid">
                     {[
-                      { key: 'excellent', emoji: '🟢', label: 'Excellent', color: '#22c55e' },
-                      { key: 'good', emoji: '🟡', label: 'Good', color: '#84cc16' },
-                      { key: 'fair', emoji: '🟠', label: 'Fair', color: '#eab308' },
-                      { key: 'rusty', emoji: '🔴', label: 'Rusty', color: '#f97316' },
-                      { key: 'critical', emoji: '💀', label: 'Critical', color: '#ef4444' }
-                    ].map(({ key, emoji, label, color }) => (
+                      { key: 'excellent', label: 'Excellent', color: '#22c55e' },
+                      { key: 'good', label: 'Good', color: '#84cc16' },
+                      { key: 'fair', label: 'Fair', color: '#eab308' },
+                      { key: 'rusty', label: 'Rusty', color: '#f97316' },
+                      { key: 'critical', label: 'Critical', color: '#ef4444' }
+                    ].map(({ key, label, color }) => (
                       <div key={key} className="health-item">
                         <div className="health-count" style={{ color }}>
                           {dashboard.health_breakdown[key as keyof typeof dashboard.health_breakdown]}
                         </div>
-                        <div className="health-label">{emoji} {label}</div>
+                        <div className="health-label">
+                          <span className="health-dot" style={{ backgroundColor: color }} />
+                          {label}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -681,7 +689,7 @@ function App() {
 
                 {history && history.dailyStats.length > 0 && (
                   <section className="card glass">
-                    <h3>📈 Activity (30 days)</h3>
+                    <h3><BarChart3 size={18} className="section-icon" /> Activity (30 days)</h3>
                     <div className="chart-wrapper">
                       <Sparkline 
                         data={history.dailyStats.map(d => d.sessions)} 
@@ -699,14 +707,14 @@ function App() {
 
                 {dashboard.decaying_skills.length > 0 && (
                   <section className="card glass warning-card">
-                    <h3>🔥 Needs Attention</h3>
+                    <h3><AlertTriangle size={18} className="section-icon warning" /> Needs Attention</h3>
                     <ul className="decay-list">
                       {dashboard.decaying_skills.slice(0, 3).map(skill => (
                         <li key={skill.id} className="decay-item" onClick={() => doQuickPractice(skill.id)}>
                           <span className="decay-icon">{skill.category_icon}</span>
                           <span className="decay-name">{skill.name}</span>
                           <span className="decay-days">{skill.days_since_practice}d</span>
-                          <span className="decay-arrow">→</span>
+                          <ChevronRight size={16} className="decay-arrow" />
                         </li>
                       ))}
                     </ul>
@@ -718,7 +726,7 @@ function App() {
             {view === 'skills' && (
               <div className="skills-view fade-in">
                 <div className="search-bar">
-                  <span className="search-icon">🔍</span>
+                  <Search size={18} className="search-icon" />
                   <input
                     type="text"
                     placeholder="Search skills..."
@@ -726,7 +734,7 @@ function App() {
                     onChange={e => setSearchQuery(e.target.value)}
                   />
                   {searchQuery && (
-                    <button className="clear-search" onClick={() => setSearchQuery('')}>✕</button>
+                    <button className="clear-search" onClick={() => setSearchQuery('')}><X size={14} /></button>
                   )}
                 </div>
 
@@ -766,7 +774,7 @@ function App() {
                           <span className="skill-category-icon">{skill.category_icon}</span>
                         </div>
                         <span className={`health-badge ${skill.health}`}>
-                          {getHealthEmoji(skill.health)}
+                          {getHealthIcon(skill.health)}
                         </span>
                       </div>
                       
@@ -797,7 +805,7 @@ function App() {
                             doQuickPractice(skill.id)
                           }}
                         >
-                          ⚡ Practice
+                          <Zap size={14} /> Practice
                         </button>
                         <button 
                           className="btn-secondary"
@@ -807,7 +815,7 @@ function App() {
                             setShowPracticeModal(true)
                           }}
                         >
-                          📝
+                          <FileText size={16} />
                         </button>
                         <button 
                           className="btn-secondary"
@@ -816,7 +824,7 @@ function App() {
                             openEditModal(skill)
                           }}
                         >
-                          ✏️
+                          <Edit2 size={16} />
                         </button>
                         <button 
                           className="btn-danger"
@@ -825,7 +833,7 @@ function App() {
                             deleteSkill(skill.id)
                           }}
                         >
-                          🗑️
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
@@ -834,11 +842,11 @@ function App() {
 
                 {skills.length === 0 && (
                   <div className="empty-state">
-                    <div className="empty-icon">🎯</div>
+                    <Target size={48} className="empty-icon" />
                     <h2>No skills yet</h2>
                     <p>Add your first skill to start tracking!</p>
                     <button className="btn-primary large" onClick={() => setShowAddModal(true)}>
-                      + Add Skill
+                      <Plus size={16} /> Add Skill
                     </button>
                   </div>
                 )}
@@ -856,7 +864,7 @@ function App() {
             {view === 'progress' && (
               <div className="progress-view fade-in">
                 <section className="card glass">
-                  <h3>📊 30-Day Summary</h3>
+                  <h3><BarChart3 size={18} className="section-icon" /> 30-Day Summary</h3>
                   {history && history.dailyStats.length > 0 ? (
                     <>
                       <div className="chart-wrapper large">
@@ -887,7 +895,7 @@ function App() {
                 </section>
 
                 <section className="card glass">
-                  <h3>🎯 Most Practiced</h3>
+                  <h3><Award size={18} className="section-icon" /> Most Practiced</h3>
                   {history && history.skillTrends.length > 0 ? (
                     <ul className="trends-list">
                       {history.skillTrends
@@ -977,7 +985,7 @@ function App() {
                   <h3>ℹ️ About</h3>
                   <p className="about-text">
                     Skill Decay Tracker v1.3.0<br/>
-                    Built with ❤️ by Zenith ⚡<br/>
+                    Built by Zenith<br/>
                     <small>Now works offline! 📱</small>
                   </p>
                   <button 
@@ -1043,7 +1051,7 @@ function App() {
           <div className="modal slide-up" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Add Skill</h2>
-              <button className="close-btn" onClick={() => setShowAddModal(false)}>✕</button>
+              <button className="close-btn" onClick={() => setShowAddModal(false)}><X size={18} /></button>
             </div>
             
             <div className="form-group">
@@ -1105,7 +1113,7 @@ function App() {
           <div className="modal slide-up" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Log Practice</h2>
-              <button className="close-btn" onClick={() => setShowPracticeModal(false)}>✕</button>
+              <button className="close-btn" onClick={() => setShowPracticeModal(false)}><X size={18} /></button>
             </div>
             
             <div className="practice-skill-info">
@@ -1167,7 +1175,7 @@ function App() {
           <div className="modal slide-up" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Edit Skill</h2>
-              <button className="close-btn" onClick={() => setShowEditModal(false)}>✕</button>
+              <button className="close-btn" onClick={() => setShowEditModal(false)}><X size={18} /></button>
             </div>
             
             <div className="form-group">
@@ -1238,7 +1246,7 @@ function App() {
           <div className="modal slide-up" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Import Data</h2>
-              <button className="close-btn" onClick={() => setShowImportModal(false)}>✕</button>
+              <button className="close-btn" onClick={() => setShowImportModal(false)}><X size={18} /></button>
             </div>
             
             <p className="modal-text">Choose how to handle existing data:</p>
