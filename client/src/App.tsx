@@ -2,90 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { TouchEvent } from 'react'
 import './App.css'
 import { UpdateChecker } from './UpdateChecker'
-
-const API_BASE = 'http://localhost:3003/api'
-
-interface Category {
-  id: string
-  name: string
-  icon: string
-  default_decay_rate: number
-  color: string
-}
-
-interface Skill {
-  id: number
-  name: string
-  category: string
-  category_name: string
-  category_icon: string
-  category_color: string
-  decay_rate: number
-  target_frequency_days: number
-  notes: string | null
-  created_at: string
-  archived: number
-  last_practiced: string | null
-  days_since_practice: number | null
-  days_since?: number // Added from dashboard endpoint
-  decay_score: number | null
-  health: string
-  health_color: string
-  total_sessions: number
-  total_minutes: number
-}
-
-interface Dashboard {
-  total_skills: number
-  health_breakdown: {
-    excellent: number
-    good: number
-    fair: number
-    rusty: number
-    critical: number
-    unknown: number
-  }
-  decaying_skills: Skill[]
-  recent_activity: { date: string; sessions: number; total_minutes: number }[]
-  practiced_today: boolean
-  current_streak: number
-  total_practice_days: number
-}
-
-interface Alert {
-  skill_id: number
-  skill_name: string
-  icon: string
-  type: string
-  message: string
-  severity: string
-  days_since?: number
-}
-
-interface HistoryData {
-  dailyStats: { date: string; sessions: number; skills_practiced: number; total_minutes: number; avg_quality: number }[]
-  skillTrends: { id: number; name: string; category_icon: string; recent_sessions: number; last_practiced: string }[]
-  days: number
-}
-
-interface Settings {
-  theme: 'dark' | 'light' | 'auto'
-  autoThemeLight: string
-  autoThemeDark: string
-  defaultTargetFrequency: number
-  showOnboarding: boolean
-}
-
-type SortOption = 'name' | 'health' | 'lastPracticed' | 'category'
-type ViewType = 'dashboard' | 'skills' | 'progress' | 'settings'
-
-const defaultSettings: Settings = {
-  theme: 'dark',
-  autoThemeLight: '07:00',
-  autoThemeDark: '19:00',
-  defaultTargetFrequency: 7,
-  showOnboarding: true
-}
+import * as storage from './storage'
+import type { Category, SkillWithStats, Dashboard, Alert, HistoryData, Settings } from './storage'
 
 // Confetti component
 const Confetti = ({ active }: { active: boolean }) => {
@@ -190,23 +108,26 @@ const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
   )
 }
 
+type SortOption = 'name' | 'health' | 'lastPracticed' | 'category'
+type ViewType = 'dashboard' | 'skills' | 'progress' | 'settings'
+
 function App() {
   const [view, setView] = useState<ViewType>('dashboard')
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [skills, setSkills] = useState<SkillWithStats[]>([])
+  const [categories] = useState<Category[]>(storage.getCategories())
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [history, setHistory] = useState<HistoryData | null>(null)
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
+  const [selectedSkill, setSelectedSkill] = useState<SkillWithStats | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showPracticeModal, setShowPracticeModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
-  const [editingSkill, setEditingSkill] = useState<Skill | null>(null)
+  const [editingSkill, setEditingSkill] = useState<SkillWithStats | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('health')
   const [filterCategory, setFilterCategory] = useState<string>('all')
-  const [settings, setSettings] = useState<Settings>(defaultSettings)
+  const [settings, setSettings] = useState<Settings>(storage.DEFAULT_SETTINGS)
   const [currentTheme, setCurrentTheme] = useState<'dark' | 'light'>('dark')
   const [toast, setToast] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -239,7 +160,6 @@ function App() {
     if (celebrate) {
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 3000)
-      // Haptic feedback
       if ('vibrate' in navigator) {
         navigator.vibrate([50, 30, 50])
       }
@@ -247,28 +167,39 @@ function App() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // Load settings
+  // Load all data from localStorage
+  const loadData = () => {
+    const loadedSettings = storage.getSettings()
+    setSettings(loadedSettings)
+    setSkills(storage.getSkillsWithStats())
+    setDashboard(storage.getDashboard())
+    setAlerts(storage.getAlerts())
+    setHistory(storage.getHistory(30))
+    
+    if (loadedSettings.showOnboarding) {
+      setShowOnboarding(true)
+    }
+    setLoading(false)
+  }
+
+  // Initial load
   useEffect(() => {
-    fetch(`${API_BASE}/settings`)
-      .then(res => res.json())
-      .then(data => {
-        const merged = { ...defaultSettings, ...data }
-        setSettings(merged)
-        if (merged.showOnboarding) {
-          setShowOnboarding(true)
-        }
-      })
-      .catch(() => {})
+    // Small delay for splash feel
+    setTimeout(loadData, 300)
   }, [])
 
+  // Refresh all data
+  const refreshAll = () => {
+    setSkills(storage.getSkillsWithStats())
+    setDashboard(storage.getDashboard())
+    setAlerts(storage.getAlerts())
+    setHistory(storage.getHistory(30))
+  }
+
   // Save settings
-  const saveSettings = async (newSettings: Settings) => {
+  const saveSettings = (newSettings: Settings) => {
+    storage.saveSettings(newSettings)
     setSettings(newSettings)
-    await fetch(`${API_BASE}/settings`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSettings)
-    })
   }
 
   // Complete onboarding
@@ -308,22 +239,6 @@ function App() {
     return () => clearInterval(interval)
   }, [settings.theme, settings.autoThemeLight, settings.autoThemeDark])
 
-  // Initial data load
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true)
-      await Promise.all([
-        fetchCategories(),
-        fetchDashboard(),
-        fetchSkills(),
-        fetchAlerts(),
-        fetchHistory()
-      ])
-      setLoading(false)
-    }
-    loadData()
-  }, [])
-
   // Pull to refresh
   const handleTouchStart = (e: TouchEvent) => {
     if (mainRef.current?.scrollTop === 0) {
@@ -336,10 +251,11 @@ function App() {
       const pullDistance = e.touches[0].clientY - pullStartY.current
       if (pullDistance > 80 && !refreshing) {
         setRefreshing(true)
-        refreshAll().then(() => {
+        setTimeout(() => {
+          refreshAll()
           setRefreshing(false)
           pullStartY.current = 0
-        })
+        }, 300)
       }
     }
   }
@@ -355,64 +271,31 @@ function App() {
     touchStartX.current = e.touches[0].clientX
   }
 
-  const handleSkillTouchEnd = (e: TouchEvent, skill: Skill) => {
+  const handleSkillTouchEnd = (e: TouchEvent, skill: SkillWithStats) => {
     const touchEndX = e.changedTouches[0].clientX
     const diff = touchStartX.current - touchEndX
     
     if (diff > 80) {
-      // Swipe left - quick practice
       setSwipedSkillId(skill.id)
       setTimeout(() => {
-        quickPractice(skill.id)
+        doQuickPractice(skill.id)
         setSwipedSkillId(null)
       }, 200)
     } else if (diff < -80) {
-      // Swipe right - open practice modal
       setSelectedSkill(skill)
       setShowPracticeModal(true)
     }
   }
 
-  const fetchCategories = async () => {
-    const res = await fetch(`${API_BASE}/categories`)
-    setCategories(await res.json())
-  }
-
-  const fetchSkills = async () => {
-    const res = await fetch(`${API_BASE}/skills`)
-    setSkills(await res.json())
-  }
-
-  const fetchDashboard = async () => {
-    const res = await fetch(`${API_BASE}/dashboard`)
-    setDashboard(await res.json())
-  }
-
-  const fetchAlerts = async () => {
-    const res = await fetch(`${API_BASE}/alerts`)
-    setAlerts(await res.json())
-  }
-
-  const fetchHistory = async () => {
-    const res = await fetch(`${API_BASE}/history?days=30`)
-    setHistory(await res.json())
-  }
-
-  const refreshAll = async () => {
-    await Promise.all([
-      fetchDashboard(),
-      fetchSkills(),
-      fetchAlerts(),
-      fetchHistory()
-    ])
-  }
-
-  const addSkill = async () => {
+  // Add skill
+  const addSkill = () => {
     if (!newSkill.name.trim()) return
-    await fetch(`${API_BASE}/skills`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSkill)
+    storage.addSkill({
+      name: newSkill.name,
+      category: newSkill.category,
+      decay_rate: newSkill.decay_rate,
+      target_frequency_days: newSkill.target_frequency_days,
+      notes: newSkill.notes || null,
     })
     setNewSkill({ 
       name: '', 
@@ -426,18 +309,15 @@ function App() {
     showToast('Skill added! 🎯')
   }
 
-  const updateSkill = async () => {
+  // Update skill
+  const updateSkill = () => {
     if (!editingSkill) return
-    await fetch(`${API_BASE}/skills/${editingSkill.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: editingSkill.name,
-        category: editingSkill.category,
-        decay_rate: editingSkill.decay_rate,
-        target_frequency_days: editingSkill.target_frequency_days,
-        notes: editingSkill.notes
-      })
+    storage.updateSkill(editingSkill.id, {
+      name: editingSkill.name,
+      category: editingSkill.category,
+      decay_rate: editingSkill.decay_rate,
+      target_frequency_days: editingSkill.target_frequency_days,
+      notes: editingSkill.notes,
     })
     setShowEditModal(false)
     setEditingSkill(null)
@@ -445,47 +325,51 @@ function App() {
     showToast('Skill updated! ✏️')
   }
 
-  const openEditModal = (skill: Skill) => {
+  const openEditModal = (skill: SkillWithStats) => {
     setEditingSkill({ ...skill })
     setShowEditModal(true)
   }
 
-  const quickPractice = async (skillId: number) => {
-    await fetch(`${API_BASE}/skills/${skillId}/quick-practice`, { method: 'POST' })
-    await refreshAll()
+  // Quick practice
+  const doQuickPractice = (skillId: number) => {
+    storage.quickPractice(skillId)
+    refreshAll()
     
-    // Check for streak milestone
-    if (dashboard && (dashboard.current_streak + 1) % 7 === 0) {
-      showToast(`🔥 ${dashboard.current_streak + 1} day streak! Amazing!`, true)
+    const newDashboard = storage.getDashboard()
+    if (newDashboard.current_streak > 0 && newDashboard.current_streak % 7 === 0) {
+      showToast(`🔥 ${newDashboard.current_streak} day streak! Amazing!`, true)
     } else {
       showToast('Practice logged! ⚡')
     }
   }
 
-  const logPractice = async () => {
+  // Log practice with details
+  const logPractice = () => {
     if (!selectedSkill) return
-    await fetch(`${API_BASE}/skills/${selectedSkill.id}/practice`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(practiceLog)
+    storage.addPracticeLog({
+      skill_id: selectedSkill.id,
+      duration_minutes: practiceLog.duration_minutes,
+      quality: practiceLog.quality,
+      notes: practiceLog.notes || null,
     })
     setPracticeLog({ duration_minutes: 30, quality: 3, notes: '' })
     setShowPracticeModal(false)
     setSelectedSkill(null)
-    await refreshAll()
+    refreshAll()
     showToast('Practice session logged! 📝', true)
   }
 
-  const deleteSkill = async (skillId: number) => {
+  // Delete skill
+  const deleteSkill = (skillId: number) => {
     if (!confirm('Delete this skill and all practice history?')) return
-    await fetch(`${API_BASE}/skills/${skillId}`, { method: 'DELETE' })
+    storage.deleteSkill(skillId)
     refreshAll()
     showToast('Skill deleted')
   }
 
-  const exportData = async () => {
-    const res = await fetch(`${API_BASE}/export`)
-    const data = await res.json()
+  // Export data
+  const exportData = () => {
+    const data = storage.exportAllData()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -496,18 +380,12 @@ function App() {
     showToast('Backup downloaded! 💾')
   }
 
+  // Import data
   const importData = async (file: File, mode: 'merge' | 'replace') => {
     try {
       const text = await file.text()
       const data = JSON.parse(text)
-      
-      const res = await fetch(`${API_BASE}/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, mode })
-      })
-      
-      const result = await res.json()
+      const result = storage.importData(data, mode)
       showToast(`Imported ${result.skills_imported} skills! ✅`, true)
       setShowImportModal(false)
       refreshAll()
@@ -639,7 +517,6 @@ function App() {
       return `${x},${y}`
     }).join(' ')
 
-    // Create area fill
     const areaPoints = `0,${height} ${points} ${width},${height}`
     
     return (
@@ -689,7 +566,6 @@ function App() {
       <Confetti active={showConfetti} />
       <UpdateChecker />
       
-      {/* Pull to refresh indicator */}
       {refreshing && (
         <div className="refresh-indicator">
           <div className="refresh-spinner" />
@@ -744,7 +620,6 @@ function App() {
           <>
             {view === 'dashboard' && dashboard && (
               <div className="dashboard fade-in">
-                {/* Hero Stats */}
                 <section className="hero-card">
                   <div className="hero-left">
                     <HealthRing value={getOverallHealth()} max={100} size={100} />
@@ -768,7 +643,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* Quick Actions */}
                 {alerts.length > 0 && (
                   <section className="quick-actions">
                     <h3>⚡ Quick Practice</h3>
@@ -777,7 +651,7 @@ function App() {
                         <button 
                           key={alert.skill_id}
                           className={`quick-action-chip ${alert.severity}`}
-                          onClick={() => quickPractice(alert.skill_id)}
+                          onClick={() => doQuickPractice(alert.skill_id)}
                         >
                           <span className="chip-icon">{alert.icon}</span>
                           <span className="chip-name">{alert.skill_name}</span>
@@ -788,7 +662,6 @@ function App() {
                   </section>
                 )}
 
-                {/* Health Breakdown */}
                 <section className="card glass">
                   <h3>Health Overview</h3>
                   <div className="health-grid">
@@ -809,7 +682,6 @@ function App() {
                   </div>
                 </section>
 
-                {/* Activity Chart */}
                 {history && history.dailyStats.length > 0 && (
                   <section className="card glass">
                     <h3>📈 Activity (30 days)</h3>
@@ -823,21 +695,20 @@ function App() {
                     <div className="chart-summary">
                       <span>{history.dailyStats.reduce((sum, d) => sum + d.sessions, 0)} sessions</span>
                       <span>•</span>
-                      <span>{history.dailyStats.length} active days</span>
+                      <span>{history.dailyStats.filter(d => d.sessions > 0).length} active days</span>
                     </div>
                   </section>
                 )}
 
-                {/* Decaying Skills */}
                 {dashboard.decaying_skills.length > 0 && (
                   <section className="card glass warning-card">
                     <h3>🔥 Needs Attention</h3>
                     <ul className="decay-list">
                       {dashboard.decaying_skills.slice(0, 3).map(skill => (
-                        <li key={skill.id} className="decay-item" onClick={() => quickPractice(skill.id)}>
+                        <li key={skill.id} className="decay-item" onClick={() => doQuickPractice(skill.id)}>
                           <span className="decay-icon">{skill.category_icon}</span>
                           <span className="decay-name">{skill.name}</span>
-                          <span className="decay-days">{skill.days_since}d</span>
+                          <span className="decay-days">{skill.days_since_practice}d</span>
                           <span className="decay-arrow">→</span>
                         </li>
                       ))}
@@ -926,7 +797,7 @@ function App() {
                           className="btn-primary"
                           onClick={(e) => {
                             e.stopPropagation()
-                            quickPractice(skill.id)
+                            doQuickPractice(skill.id)
                           }}
                         >
                           ⚡ Practice
@@ -1008,7 +879,7 @@ function App() {
                           <span className="stat-label">Minutes</span>
                         </div>
                         <div className="stat-box">
-                          <span className="stat-number">{history.dailyStats.length}</span>
+                          <span className="stat-number">{history.dailyStats.filter(d => d.sessions > 0).length}</span>
                           <span className="stat-label">Active Days</span>
                         </div>
                       </div>
@@ -1108,8 +979,9 @@ function App() {
                 <section className="card glass">
                   <h3>ℹ️ About</h3>
                   <p className="about-text">
-                    Skill Decay Tracker v1.2.0<br/>
-                    Built with ❤️ by Zenith ⚡
+                    Skill Decay Tracker v1.3.0<br/>
+                    Built with ❤️ by Zenith ⚡<br/>
+                    <small>Now works offline! 📱</small>
                   </p>
                   <button 
                     className="btn-text"
@@ -1127,7 +999,6 @@ function App() {
         )}
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="bottom-nav">
         <button 
           className={view === 'dashboard' ? 'active' : ''} 
@@ -1165,7 +1036,6 @@ function App() {
         </button>
       </nav>
 
-      {/* Toast */}
       {toast && (
         <div className="toast slide-up">{toast}</div>
       )}

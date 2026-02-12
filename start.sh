@@ -3,16 +3,15 @@ cd "$(dirname "$0")"
 
 # Start server in background
 echo "Starting server..."
-cd server && node index.js &
+(cd server && node index.js) &
 SERVER_PID=$!
-cd ..
 
 # Wait for server to start
 sleep 2
 
 # Start client
 echo "Starting client..."
-cd client && npm run dev &
+(cd client && npm run dev) &
 CLIENT_PID=$!
 
 echo ""
