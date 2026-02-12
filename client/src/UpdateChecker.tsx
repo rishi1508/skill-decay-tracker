@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const GITHUB_REPO = 'rishi1508/skill-decay-tracker'
-const CURRENT_VERSION = '1.3.1' // Update this with each release
+const CURRENT_VERSION = '1.3.2' // Update this with each release
 
 interface Release {
   tag_name: string
